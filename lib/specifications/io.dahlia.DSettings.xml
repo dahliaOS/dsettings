@@ -1,0 +1,92 @@
+<!DOCTYPE node PUBLIC
+    "-//freedesktop//DTD D-BUS Object Introspection 1.0//EN"
+    "http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd" >
+<node xmlns:doc="http://www.freedesktop.org/dbus/1.0/doc.dtd">
+    <interface name="io.dahlia.DSettings">
+        <!--
+            List the available tables.
+
+            Those are returned as an array of table names.
+        -->
+        <method name="List">
+            <arg name="tables" type="as" direction="out" />
+        </method>
+
+        <!--
+            Get a table by name.
+
+            The returned value is the object path of said table, which lives
+            onto the same name and process.
+        -->
+        <method name="Get">
+            <arg name="name" type="s" direction="in" />
+
+            <arg name="path" type="o" direction="out" />
+        </method>
+
+        <!--
+            Create a new table.
+
+            The table needs a name and can take a scheme which provides type safety
+            for the defined values and an optional owner which has the exclusive rights
+            for certain protected operations, like Table.SetScheme and Drop.
+        -->
+        <method name="Create">
+            <arg name="name" type="s" direction="in" />
+            <arg name="scheme" type="a{sv}" direction="in" />
+            <arg name="owner" type="s" direction="in" />
+        </method>
+
+        <!--
+            Removes a table from the instance, deleting any info associated to it.
+
+            If the table specifies an owner, then this method is allowed only if said
+            owner is calling it.
+        -->
+        <method name="Drop">
+            <arg name="name" type="s" direction="in" />
+        </method>
+
+        <!--
+            The number of existing tables.
+        -->
+        <property name="TableCount" type="t" access="read" />
+
+        <!--
+            Version of the specification implemented by this interface.
+        -->
+        <property name="Version" type="u" access="read" />
+
+        <!--
+            Generated when a table has been created.
+            Contains the name of the new table.
+        -->
+        <signal name="TableCreated">
+            <arg name="name" type="s" />
+        </signal>
+
+        <!--
+            Generated when a table has been deleted.
+            Contains the name of the deleted table.
+        -->
+        <signal name="TableDropped">
+            <arg name="name" type="s" />
+        </signal>
+    </interface>
+
+    <interface name="org.freedesktop.DBus.ObjectManager">
+        <method name="GetManagedObjects">
+            <arg name="objects" type="a{oa{sa{sv}}}" direction="out"/>
+        </method>
+
+        <signal name="InterfacesAdded">
+            <arg name="object" type="o"/>
+            <arg name="interfaces" type="a{sa{sv}}"/>
+        </signal>
+
+        <signal name="InterfacesRemoved">
+            <arg name="object" type="o"/>
+            <arg name="interfaces" type="as"/>
+        </signal>
+    </interface>
+</node>

@@ -1,0 +1,167 @@
+<!DOCTYPE node PUBLIC
+    "-//freedesktop//DTD D-BUS Object Introspection 1.0//EN"
+    "http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd" >
+<node xmlns:doc="http://www.freedesktop.org/dbus/1.0/doc.dtd">
+    <interface name="io.dahlia.DSettings.Table">
+        <!--
+            Read a single setting.
+
+            It is usually not advised to use this method, as ReadBatch is more performant
+            for sequential reads.
+
+            The type of the returned variant can be one of these 5: String, Int32, Double,
+            Boolean and String Array.
+        -->
+        <method name="Read">
+            <arg name="setting" direction="in" type="s" />
+            <arg name="return_raw_value" direction="in" type="b" />
+
+            <arg name="result" direction="out" type="v" />
+        </method>
+
+        <!-- 
+            Read a set of settings.
+
+            The result will always be of the same length as the input array,
+            values that don't exist on the database will just be represented as an empty array.
+
+            If an empty array gets passed then the entire database is returned,
+            useful for implementations that init a local cache and rely on signals
+            for further updates.
+
+            If return_raw_values is false, when a value isn't present in the table
+            but a scheme entry exists then its default value will be returned instead.
+        -->
+        <method name="ReadBatch">
+            <arg name="settings" direction="in" type="as" />
+            <arg name="return_raw_values" direction="in" type="b" />
+
+            <arg name="result" direction="out" type="a{sav}" />
+        </method>
+
+        <!--
+            Write a single setting onto the table.
+
+            The value variant must have one the five supported signatures,
+            s, i, d, b, as.
+
+            If the setting is defined in the scheme then the defined and the passed
+            value signature must match else an error will be returned.
+        -->
+        <method name="Write">
+            <arg name="setting" direction="in" type="s" />
+            <arg name="value" direction="in" type="v" />
+        </method>
+
+        <!--
+            Write a set of settings onto the table.
+
+            The specified values must be of one of the 5 supported signatures.
+
+            If any of the specified settings doesn't match signatures with their
+            eventual scheme definitions then the result dict will have it's the corresponding
+            value set to false, indicating a write failure.
+        -->
+        <method name="WriteBatch">
+            <arg name="settings" direction="in" type="a{sv}" />
+
+            <arg name="result" direction="out" type="a{sb}" />
+        </method>
+
+        <!--
+            Delete a single setting from the table.
+
+            If the setting doesn't exist the call will return an error.
+        -->
+        <method name="Delete">
+            <arg name="setting" direction="in" type="s" />
+        </method>
+
+        <!--
+            Delete a set of settings from the table.
+
+            The returned value represents how many settings were existing
+            and deleted afterwards.
+        -->
+        <method name="DeleteBatch">
+            <arg name="settings" direction="in" type="as" />
+
+            <arg name="count" direction="out" type="u" />
+        </method>
+
+        <!--
+            Clears every entry from the database.
+        -->
+        <method name="Clear" />
+
+        <!--
+            Sets the scheme of the table.
+
+            The scheme gives type safety to specified values, making sure the saved
+            values always match the types defined in the scheme.
+
+            To remove the scheme, pass in an empty dictionary.
+
+            If a table owner is specified, then this method will work only if
+            called by said owner.
+        -->
+        <method name="SetScheme">
+            <arg name="scheme" type="a{sv}" direction="in" />
+        </method>
+
+        <!--
+            Returns the current scheme of this table.
+
+            If none is present, an empty dictionary is returned.
+        -->
+        <method name="GetScheme">
+            <arg name="scheme" type="a{sv}" direction="out" />
+        </method>
+
+        <!--
+            The number of stored values inside this table
+        -->
+        <property name="EntryCount" type="t" access="read" />
+        
+        <!--
+            The current owner of this table, empty if there is none.
+            The table owner can modify the scheme and drop the table.
+        -->
+        <property name="Owner" type="s" access="read" />
+
+        <!--
+            Version of the specification implemented by this table.
+        -->
+        <property name="Version" type="u" access="read" />
+
+        <!--
+            Generated when a client writes some settings onto the table.
+            Contains the modified settings and their new values.
+        -->
+        <signal name="SettingsWritten">
+            <arg name="settings" type="a{sv}" />
+        </signal>
+
+        <!--
+            Generated when a client removes some settings from the table.
+            Contains the list of settings that were deleted.
+        -->
+        <signal name="SettingsDeleted">
+            <arg name="settings" type="as" />
+        </signal>
+
+        <!--
+            Generated when a client calls the clear method onto this table.
+        -->
+        <signal name="SettingsCleared" />
+
+        <!--
+            Generated when the table's scheme is updated.
+            Contains the old and the new scheme.
+        -->
+        <signal name="SchemeUpdated">
+            <arg name="old_scheme" type="a{sv}" />
+            <arg name="new_scheme" type="a{sv}" />
+        </signal>
+    </interface>
+</node>
