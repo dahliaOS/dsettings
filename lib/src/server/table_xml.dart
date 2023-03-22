@@ -82,19 +82,14 @@ class DTableParser {
     switch (element.qualifiedName) {
       case "string":
         type = DSettingsTableType.string;
-        break;
       case "integer":
         type = DSettingsTableType.integer;
-        break;
       case "double":
         type = DSettingsTableType.float;
-        break;
       case "boolean":
         type = DSettingsTableType.boolean;
-        break;
       case "stringArray":
         type = DSettingsTableType.stringArray;
-        break;
       default:
         _logger.warning("Invalid type ${element.qualifiedName}");
         return null;
@@ -130,7 +125,7 @@ class DTableParser {
   }
 }
 
-class DTableEncoder {
+abstract final class DTableEncoder {
   const DTableEncoder._();
 
   //static final Logger _logger = Logger("DTableParser");

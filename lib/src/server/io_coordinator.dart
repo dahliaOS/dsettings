@@ -59,27 +59,19 @@ void _isolateMain(SendPort sendPort) {
     (message) async {
       if (message is! _IOIsolateMessage) return;
 
-      switch (message.type) {
-        case _IOIsolateMessageType.open:
-          message = message as _IOIsolateOpenMessage;
-
+      switch (message) {
+        case _IOIsolateOpenMessage(:final data):
           if (coordinator != null) return;
-
-          coordinator = _IOIsolateCoordinator(File(message.data));
+          coordinator = _IOIsolateCoordinator(File(data));
           sendPort.send(null); // We finished setting up the file, go on
-          break;
-        case _IOIsolateMessageType.close:
+        case _IOIsolateCloseMessage():
           coordinator?.close();
           coordinator = null;
-          break;
-        case _IOIsolateMessageType.requestWrite:
-          message = message as _IOIsolateRequestWriteMessage;
-          coordinator?.requestWrite(message.data);
-          break;
-        case _IOIsolateMessageType.delete:
+        case _IOIsolateRequestWriteMessage(:final data):
+          coordinator?.requestWrite(data);
+        case _IOIsolateDeleteMessage():
           await coordinator?.delete();
-          sendPort.send(null); // No more file :(
-          break;
+          sendPort.send(null);
       }
     },
     onDone: () {
@@ -196,38 +188,26 @@ class _IOIsolateCoordinator {
   }
 }
 
-abstract class _IOIsolateMessage<T> {
-  final _IOIsolateMessageType type;
+sealed class _IOIsolateMessage<T> {
   final T data;
 
-  const _IOIsolateMessage({required this.type, required this.data});
+  const _IOIsolateMessage({required this.data});
 }
 
 class _IOIsolateOpenMessage extends _IOIsolateMessage<String> {
-  const _IOIsolateOpenMessage({required super.data})
-      : super(type: _IOIsolateMessageType.open);
+  const _IOIsolateOpenMessage({required super.data});
 }
 
 class _IOIsolateCloseMessage extends _IOIsolateMessage<void> {
-  const _IOIsolateCloseMessage()
-      : super(data: null, type: _IOIsolateMessageType.close);
+  const _IOIsolateCloseMessage() : super(data: null);
 }
 
 class _IOIsolateRequestWriteMessage extends _IOIsolateMessage<String> {
-  const _IOIsolateRequestWriteMessage({required super.data})
-      : super(type: _IOIsolateMessageType.requestWrite);
+  const _IOIsolateRequestWriteMessage({required super.data});
 }
 
 class _IOIsolateDeleteMessage extends _IOIsolateMessage<void> {
-  const _IOIsolateDeleteMessage()
-      : super(data: null, type: _IOIsolateMessageType.delete);
-}
-
-enum _IOIsolateMessageType {
-  open,
-  close,
-  requestWrite,
-  delete,
+  const _IOIsolateDeleteMessage() : super(data: null);
 }
 
 class _BlockingStreamListener<T> {

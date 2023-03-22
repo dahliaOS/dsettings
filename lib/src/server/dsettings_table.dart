@@ -163,6 +163,8 @@ class DSettingsTable extends DSettingsTableBase {
           }
         }
       });
+    } else {
+      actualSettings.addAll(settings);
     }
 
     entries.writeBatch(actualSettings);

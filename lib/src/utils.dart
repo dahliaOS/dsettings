@@ -22,16 +22,11 @@ Future<bool> isCallAllowed(
 
 extension XmlUtils on String? {
   bool? get asBool {
-    if (this == null) return null;
-
-    switch (this) {
-      case "true":
-        return true;
-      case "false":
-        return false;
-    }
-
-    return null;
+    return switch (this) {
+      "true" => true,
+      "false" => false,
+      _ => null,
+    };
   }
 
   List<String>? get asStringList {
@@ -45,22 +40,15 @@ extension XmlUtils on String? {
 }
 
 Object? extractValue(DBusValue value) {
-  switch (value.signature.value) {
-    case "v":
-      return extractValue(value.asVariant());
-    case "s":
-      return value.asString();
-    case "i":
-      return value.asInt32();
-    case "d":
-      return value.asDouble();
-    case "b":
-      return value.asBoolean();
-    case "as":
-      return value.asStringArray().toList();
-  }
-
-  return null;
+  return switch (value.signature.value) {
+    "v" => extractValue(value.asVariant()),
+    "s" => value.asString(),
+    "i" => value.asInt32(),
+    "d" => value.asDouble(),
+    "b" => value.asBoolean(),
+    "as" => value.asStringArray().toList(),
+    _ => null,
+  };
 }
 
 DSettingsEntry? valueToEntry(DBusValue value) {
@@ -84,26 +72,18 @@ DBusValue valueToDBus<T>(T value) {
 }
 
 DBusValue convertToDBus<T>(DSettingsTableType<T> type, T value) {
-  switch (type.signature) {
-    case '*':
-      final DSettingsTableType? type = DSettingsTableType.fromValue(value);
+  final DSettingsTableType? estimatedType = DSettingsTableType.fromValue(value);
 
-      if (type == null || type == DSettingsTableType.any) break;
-
-      return DBusVariant(convertToDBus(type, value));
-    case 's':
-      return DBusString(value as String);
-    case 'i':
-      return DBusInt32(value as int);
-    case 'd':
-      return DBusDouble(value as double);
-    case 'b':
-      return DBusBoolean(value as bool);
-    case 'as':
-      return DBusArray.string(value as List<String>);
-  }
-
-  throw Exception("Can't be converted to DBus: $type");
+  return switch (type.signature) {
+    '*' when estimatedType != null && estimatedType != DSettingsTableType.any =>
+      DBusVariant(convertToDBus(estimatedType, value)),
+    's' when value is String => DBusString(value),
+    'i' when value is int => DBusInt32(value),
+    'd' when value is double => DBusDouble(value),
+    'b' when value is bool => DBusBoolean(value),
+    'as' when value is List<String> => DBusArray.string(value),
+    _ => throw Exception("Can't be converted to DBus: $type"),
+  };
 }
 
 Object encodeList(Object value) {
@@ -126,9 +106,7 @@ DBusValue? readValue(
   final bool hasValue = value != null;
   final bool hasSchemeEntry = schemeEntry != null;
 
-  if (!hasValue && (!hasSchemeEntry || returnRawValue)) {
-    return null;
-  }
+  if (!hasValue && (!hasSchemeEntry || returnRawValue)) return null;
 
   final DSettingsEntry actualEntry = value ?? schemeEntry!;
 

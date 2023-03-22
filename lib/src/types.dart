@@ -130,26 +130,24 @@ enum DSettingsTableType<T extends Object?> {
   stringArray<List<String>>('as');
 
   static DSettingsTableType? fromValue(Object? value) {
-    if (value == null) return null;
-
-    if (value is String) {
-      return DSettingsTableType.string;
-    } else if (value is int) {
-      return DSettingsTableType.integer;
-    } else if (value is double) {
-      return DSettingsTableType.float;
-    } else if (value is bool) {
-      return DSettingsTableType.boolean;
-    } else if (value is List) {
+    bool canCastToString(List val) {
       try {
-        value.cast<String>();
-        return DSettingsTableType.stringArray;
+        val.cast<String>();
+        return true;
       } catch (e) {
-        return null;
+        return false;
       }
     }
 
-    return DSettingsTableType.any;
+    return switch (value) {
+      null => null,
+      String() => DSettingsTableType.string,
+      int() => DSettingsTableType.integer,
+      double() => DSettingsTableType.float,
+      bool() => DSettingsTableType.boolean,
+      List() => canCastToString(value) ? DSettingsTableType.stringArray : null,
+      _ => DSettingsTableType.any,
+    };
   }
 
   static DSettingsTableType? fromIndex(int index) {
@@ -174,28 +172,25 @@ enum DSettingsTableType<T extends Object?> {
   DBusSignature get dBusSignature => DBusSignature.unchecked(signature);
 
   T? tryParse(String input) {
-    switch (this.signature) {
-      case '*':
-        Object? value;
+    return switch (signature) {
+      '*' => _matchType(input),
+      's' => input,
+      'i' => int.tryParse(input),
+      'd' => double.tryParse(input),
+      'b' => input.asBool,
+      'as' => input.asStringList,
+      _ => null,
+    } as T?;
+  }
 
-        for (int i = 1; i < DSettingsTableType.values.length; i++) {
-          final DSettingsTableType type = DSettingsTableType.values[i];
+  T? _matchType(String input) {
+    Object? value;
 
-          value = type.tryParse(input);
-          if (value != null) return value as T;
-        }
+    for (int i = 1; i < DSettingsTableType.values.length; i++) {
+      final DSettingsTableType type = DSettingsTableType.values[i];
 
-        return null;
-      case 's':
-        return input as T;
-      case 'i':
-        return int.tryParse(input) as T;
-      case 'd':
-        return double.tryParse(input) as T;
-      case 'b':
-        return input.asBool as T;
-      case 'as':
-        return input.asStringList as T;
+      value = type.tryParse(input);
+      if (value case T() when value != null) return value;
     }
 
     return null;
