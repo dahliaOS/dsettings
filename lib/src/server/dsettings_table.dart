@@ -94,8 +94,7 @@ class DSettingsTable extends DSettingsTableBase {
 
   @override
   Future<DBusMethodResponse> doRead(String setting, bool returnRawValue) async {
-    final DBusValue? value =
-        readValue(setting, entries, scheme, returnRawValue);
+    final DBusValue? value = readValue(setting, entries, scheme, returnRawValue);
 
     if (value == null) {
       return DBusMethodErrorResponse.invalidArgs("Setting $setting not found");
@@ -123,8 +122,7 @@ class DSettingsTable extends DSettingsTableBase {
     final DSettingsEntry? schemeEntry = scheme?.read(setting);
 
     if (schemeEntry != null) {
-      final DSettingsTableType? type =
-          DSettingsTableType.fromDBusSignature(value.signature);
+      final DSettingsTableType? type = DSettingsTableType.fromDBusSignature(value.signature);
 
       if (type != schemeEntry.type) {
         return DBusMethodErrorResponse.invalidArgs(
@@ -154,8 +152,7 @@ class DSettingsTable extends DSettingsTableBase {
         final DSettingsEntry? schemeEntry = scheme?.read(key);
 
         if (schemeEntry != null) {
-          final DSettingsTableType? type =
-              DSettingsTableType.fromDBusSignature(value.signature);
+          final DSettingsTableType? type = DSettingsTableType.fromDBusSignature(value.signature);
 
           result[key] = type == schemeEntry.type;
           if (type == schemeEntry.type) {
@@ -269,16 +266,13 @@ class DSettingsTable extends DSettingsTableBase {
   }
 
   @override
-  Future<DBusMethodResponse> getOwner() async =>
-      DBusGetPropertyResponse(DBusString(owner ?? ""));
+  Future<DBusMethodResponse> getOwner() async => DBusGetPropertyResponse(DBusString(owner ?? ""));
 
   @override
-  Future<DBusMethodResponse> getEntryCount() async =>
-      DBusGetPropertyResponse(DBusInt64(entries.length));
+  Future<DBusMethodResponse> getEntryCount() async => DBusGetPropertyResponse(DBusInt64(entries.length));
 
   @override
-  Future<DBusMethodResponse> getVersion() async =>
-      DBusGetPropertyResponse(const DBusInt32(1));
+  Future<DBusMethodResponse> getVersion() async => DBusGetPropertyResponse(const DBusInt32(1));
 
   @override
   Map<String, Map<String, DBusValue>> get interfacesAndProperties => {
