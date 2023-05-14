@@ -19,7 +19,7 @@ Future<void> main(List<String> arguments) async {
       name: record.loggerName,
     );
   });
-
+  stdout.writeln("Starting DSettings server");
   DSettingsServer.instance.open(arguments.first);
 }
 
@@ -42,11 +42,13 @@ class DSettingsServer {
 
     sigint = ProcessSignal.sigint.watch().listen(_closeFromSignal);
     sigterm = ProcessSignal.sigterm.watch().listen(_closeFromSignal);
+    stdout.writeln("DSettings started sucessfully. Hit Ctrl+C to close.");
   }
 
   Future<void> _closeFromSignal(ProcessSignal e) => close();
 
   Future<void> close() async {
+    log("\nClosing server");
     await dsettings?.close();
     await client.releaseName("io.dahlia.DSettings");
     await client.close();

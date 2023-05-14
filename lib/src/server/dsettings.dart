@@ -14,15 +14,12 @@ class DSettings extends DSettingsBase {
   final Directory directory;
   final List<DSettingsTable> tables;
 
-  DSettings._(this.directory, this.tables)
-      : super(path: DBusObjectPath("/io/dahlia/DSettings"));
+  DSettings._(this.directory, this.tables) : super(path: DBusObjectPath("/io/dahlia/DSettings"));
 
   static Future<DSettings> newInstance(Directory directory) async {
     final List<FileSystemEntity> entities = directory.listSync();
-    final List<File> files = entities
-        .whereType<File>()
-        .where((e) => p.extension(e.path) == ".dtable")
-        .toList();
+    final List<File> files =
+        entities.whereType<File>().where((e) => p.extension(e.path) == ".dtable").toList();
 
     final List<DSettingsTable> tables = [];
     for (final File file in files) {
@@ -44,6 +41,7 @@ class DSettings extends DSettingsBase {
 
       await client!.registerObject(element);
     }
+    stdout.writeln("Registered ${tables.length} ${tables.length == 1 ? "table" : "tables"}");
   }
 
   Future<void> close() async {
@@ -57,8 +55,7 @@ class DSettings extends DSettingsBase {
   Future<DBusMethodResponse> handleMethodCall(DBusMethodCall methodCall) async {
     if (methodCall.values.isNotEmpty) {
       final String tableName = methodCall.values.first.asString();
-      final String? owner =
-          tables.firstWhereOrNull((e) => e.name == tableName)?.properOwner;
+      final String? owner = tables.firstWhereOrNull((e) => e.name == tableName)?.properOwner;
 
       final bool callAllowed = await isCallAllowed(
         client,
@@ -87,10 +84,12 @@ class DSettings extends DSettingsBase {
 
   @override
   Future<DBusMethodResponse> doGet(String name) async {
-    final DSettingsTable? table =
-        tables.firstWhereOrNull((e) => e.name == name);
+    final DSettingsTable? table = tables.firstWhereOrNull((e) => e.name == name);
 
-    if (table != null) return DBusMethodSuccessResponse([table.path]);
+    if (table != null) {
+      stdout.writeln("The table $name was accessed");
+      return DBusMethodSuccessResponse([table.path]);
+    }
 
     return DBusMethodErrorResponse.failed("The table $name was not found");
   }
@@ -136,8 +135,7 @@ class DSettings extends DSettingsBase {
     final XmlDocument doc = DTableEncoder.encode(table);
     final File file = File(p.join(directory.path, "${uuid.v4()}.dtable"));
     await file.writeAsString(doc.toXmlString(pretty: true));
-    final DSettingsTable? wrapped =
-        await DSettingsTable.wrapWithCoordinator(file, (_) => table);
+    final DSettingsTable? wrapped = await DSettingsTable.wrapWithCoordinator(file, (_) => table);
 
     tables.add(wrapped!);
     await registerTables();
